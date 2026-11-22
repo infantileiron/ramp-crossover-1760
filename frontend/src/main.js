@@ -21,8 +21,12 @@ async function load(page, id) {
   if (page === 'reports') return { reports: await api.reports() };
   const [route] = await api.routes();
   if (!route) return { route: null };
-  const [pairs, plans] = await Promise.all([api.pairs(route.code), page === 'runs' ? api.plans(route.code) : []]);
-  return { route, pairs, plans };
+  if (page === 'pairs') {
+    const [pairs, batches, entries] = await Promise.all([api.pairs(route.code), api.batches(route.code), api.entries(route.code)]);
+    return { route, pairs, batches, entries };
+  }
+  const [pairs, plans, batches] = await Promise.all([api.pairs(route.code), page === 'runs' ? api.plans(route.code) : [], page === 'runs' ? api.batches(route.code) : []]);
+  return { route, pairs, plans, batches };
 }
 
 async function render(refresh = false) {

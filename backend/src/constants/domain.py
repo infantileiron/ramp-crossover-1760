@@ -23,3 +23,23 @@ class Decision(StrEnum):
     RETEST = 'retest'
     RETAIN = 'retain'
     PILOT = 'pilot'
+
+
+class EntryKind(StrEnum):
+    REGISTER = 'register'
+    SUPPLEMENT = 'supplement'
+    MODIFY = 'modify'
+    REUPLOAD = 'reupload'
+
+
+class EntryStatus(StrEnum):
+    PASSED = 'passed'
+    MISSING = 'missing'
+    DUPLICATE = 'duplicate'
+    SEQUENCE_CONFLICT = 'sequence_conflict'
+    CONFLICT = 'conflict'
+
+
+class BatchChoice(StrEnum):
+    ORIGINAL = 'original'
+    LATEST_COMPLETE = 'latest_complete'

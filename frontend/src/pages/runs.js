@@ -6,25 +6,27 @@ import { go } from '../router/hash.js';
 import { isComplete } from '../types/field.js';
 import { e, sec } from '../utils/format.js';
 
-export function runsPage(root, { route, pairs, plans, user, refresh }) {
+export function runsPage(root, { route, pairs, plans, batches = [], user, refresh }) {
   if (!route) { root.innerHTML = empty('暂无路线', '需要先准备现场路线与试走记录。'); return; }
   const edit = user.role === 'analyst';
   if (user.role === 'viewer') { root.innerHTML = empty('运行由分析员负责', '可前往实验报告查看已发布结果。', '<a href="#reports">实验报告 →</a>'); return; }
+  const latest = batches[0];
   root.innerHTML = `${heading('对照运行', '选择参数版本，冻结当前台账并提交后台计算。')}
     <div class="split"><div>
       <section class="panel">
-        <div class="panel-title"><h2>计算范围</h2><p>${e(route.code)} · ${e(route.name)} · 两序列、两周期</p></div>
+        <div class="panel-title"><h2>计算范围</h2><p>${e(route.code)} · ${e(route.name)} · 两序列、两周期${latest ? ` · 冻结至批次「${e(latest.label)}」` : ''}</p></div>
         <div class="run-groups">${[['AB', 'A', 'B'], ['BA', 'B', 'A']].map(([seq, first, second]) => {
           const group = pairs.filter(row => row.sequence === seq);
           return `<div><div aria-label="${seq}">${sign(first, first === 'A' ? route.sign_a : route.sign_b)} <span aria-hidden="true">→</span> ${sign(second)}</div>
             <strong>${group.filter(isComplete).length} / ${group.length}</strong><small>完整配对 / 登记</small></div>`;
         }).join('')}</div>
-        ${edit && plans.length ? `<form id="run-form" class="run-form"><label>参数版本<select name="plan_id" id="plan-select">${plans.map(plan => `<option value="${plan.id}">${e(plan.edition)}</option>`).join('')}</select></label>
+        ${latest ? `<p class="run-batch">仅纳入同一批次且校验通过的配对；重复、顺序冲突与被覆盖的上传不计入。当前冻结批次：<strong>${e(latest.label)}</strong>（${e(latest.source)} · ${latest.entries} 条上传）。</p>` : '<p class="run-batch">尚无采集批次，请先在配对记录中建立批次并登记。</p>'}
+        ${edit && plans.length && latest ? `<form id="run-form" class="run-form"><label>参数版本<select name="plan_id" id="plan-select">${plans.map(plan => `<option value="${plan.id}">${e(plan.edition)}</option>`).join('')}</select></label>
           <div id="plan-summary" class="plan-summary"></div><p class="form-error" role="alert" hidden></p>
           <button type="submit" class="primary">提交计算 <span aria-hidden="true">→</span></button></form>` : ''}
       </section>
       <section class="panel method"><div class="panel-title"><h2>计算与复核口径</h2></div>
-        <dl><div><dt>完整配对</dt><dd>仅纳入同一人两轮均有用时的记录，缺测单独列出。</dd></div>
+        <dl><div><dt>完整配对</dt><dd>仅纳入同一批次且校验通过、两轮均有用时的记录，缺测单独列出。</dd></div>
         <div><dt>序列等权</dt><dd>分别计算 AB 和 BA 的组内变化，两组等权计算处理差与时期差。</dd></div>
         <div><dt>顺序差复核线</dt><dd>检查双轮平均用时差。超过或达到阈值时，提示复核现场条件。</dd></div></dl>
       </section>

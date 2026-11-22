@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
-from src.constants.domain import Decision, Sequence
+from src.constants.domain import BatchChoice, Decision, Sequence
 
 RouteCode = Annotated[str, StringConstraints(pattern=r'^R[0-9]{2}$')]
 PairCode = Annotated[str, StringConstraints(pattern=r'^[A-Z0-9][A-Z0-9-]{1,19}$')]
@@ -20,6 +20,7 @@ class Credentials(Input):
 
 
 class PairInput(Input):
+    batch_id: int = Field(gt=0, le=2147483647)
     sequence: Sequence
     period1: Seconds | None
     period2: Seconds | None
@@ -29,6 +30,11 @@ class PairInput(Input):
         if self.period1 is None and self.period2 is None:
             raise ValueError('至少录入一个周期的用时')
         return self
+
+
+class BatchInput(Input):
+    label: str = Field(min_length=1, max_length=40)
+    source: str = Field(min_length=1, max_length=80)
 
 
 class PlanInput(Input):
@@ -45,3 +51,4 @@ class RunInput(Input):
 class ReviewInput(Input):
     decision: Decision
     note: str = Field(min_length=4, max_length=500)
+    batch_choice: BatchChoice
